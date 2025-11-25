@@ -1,3 +1,4 @@
+import { Logo } from "@/components/Logo";
 import { Button } from "@heroui/button";
 import { Link } from "@heroui/link";
 
@@ -7,14 +8,7 @@ export default function Home() {
       <div className="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark group/design-root  font-display">
         <main className="flex flex-col flex-grow w-full max-w-md mx-auto ">
           <div className="flex-grow flex flex-col items-center justify-center text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span className="material-symbols-outlined text-4xl text-primary">
-                psychology
-              </span>
-              <span className="material-symbols-outlined text-4xl text-primary">
-                style
-              </span>
-            </div>
+            <Logo />
             <h1 className="text-[#0c0f1d] dark:text-[#F7FAFC] tracking-tight text-5xl font-serif-display font-bold leading-tight">
               EgoQuest
             </h1>

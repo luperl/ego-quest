@@ -33,7 +33,7 @@ export default function GamePage() {
   const [showButonGoToResume, setShowButonGoToResume] = useState(false);
 
   const questionOnClick = (option: any, optionIndex: number) => {
-    const isCorrect = option.isCorret === true;
+    const isCorrect = option.correctAnswer === true;
     updateCardsAnswer(currentQuestionIndex, optionIndex, isCorrect);
     setDisabledNextButton(false);
 
