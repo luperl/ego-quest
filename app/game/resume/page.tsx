@@ -3,11 +3,21 @@ import { ResumeResult } from "@/components/resume-result";
 import { GameContext } from "@/contexts/game-context";
 import { Button } from "@heroui/button";
 import { Link } from "@heroui/link";
-import { useContext } from "react";
+import { useRouter } from "next/navigation";
+import { useContext, useEffect } from "react";
 
 export default function ResumePage() {
   const context = useContext(GameContext);
+  const router = useRouter();
+
   if (!context) return null;
+
+  useEffect(() => {
+    if (context.reviewAnswers.length === 0) {
+      router.push("/game/new");
+    }
+  }, []);
+
   const totalScore = context.questionCards.reduce(
     (acc, q) => acc + (q.score || 0),
     0
@@ -81,6 +91,12 @@ export default function ResumePage() {
                 <p>
                   <span className="text-[#4CAF50]">Resposta Correta:</span>{" "}
                   {answer.correctAnswer}
+                </p>
+              )}
+              {!answer.isCorrect && (
+                <p>
+                  <span className="text-white">Descrição do mecanismo:</span>{" "}
+                  {answer.description}
                 </p>
               )}
             </div>

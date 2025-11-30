@@ -1,3 +1,4 @@
+"use client";
 import { Logo } from "@/components/Logo";
 import { Button } from "@heroui/button";
 import { Link } from "@heroui/link";
@@ -13,7 +14,7 @@ export default function Home() {
               EgoQuest
             </h1>
             <p className="text-[#2D3748] dark:text-[#A0AEC0] text-base font-normal leading-normal pt-2 px-4 text-center">
-              Explore os mecanismos de defesa da mente.
+              Explore os mecanismos de defesa do ego.
             </p>
           </div>
           <div className="flex justify-center py-8">
@@ -24,12 +25,6 @@ export default function Home() {
                   variant="shadow"
                 >
                   <span className="truncate">Novo Jogo</span>
-                </Button>
-              </Link>
-
-              <Link href="/history">
-                <Button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 px-5 bg-transparent text-[#2D3748] dark:text-[#A0AEC0] text-base font-bold leading-normal tracking-[0.015em] w-full">
-                  <span className="truncate">Histórico de Pontuação</span>
                 </Button>
               </Link>
             </div>

@@ -7,7 +7,12 @@ export interface Card {
 
 export interface DefenseMechanism {
   name: string;
-  cards: Card[];
+  description: string;
+  cards: {
+    easy: Card[];
+    medium: Card[];
+    hard: Card[];
+  };
 }
 
 export interface ListCards {

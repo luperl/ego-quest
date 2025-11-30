@@ -31,11 +31,13 @@ export default function GamePage() {
 
   const [disabledNextButton, setDisabledNextButton] = useState(true);
   const [showButonGoToResume, setShowButonGoToResume] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
 
   const questionOnClick = (option: any, optionIndex: number) => {
     const isCorrect = option.correctAnswer === true;
     updateCardsAnswer(currentQuestionIndex, optionIndex, isCorrect);
     setDisabledNextButton(false);
+    setShowDescription(true);
 
     if (currentQuestionIndex === totalQuestions - 1) {
       setShowButonGoToResume(true);
@@ -46,6 +48,8 @@ export default function GamePage() {
     if (currentQuestionIndex < totalQuestions - 1) {
       goToNextQuestion();
       setDisabledNextButton(true);
+      setShowDescription(false);
+
       return;
     }
   };
@@ -63,6 +67,15 @@ export default function GamePage() {
       />
       <main className="flex-grow flex flex-col items-center justify-center p-4">
         <QuestionMechanismCard text={question.question} />
+
+        {showDescription && (
+          <div className="w-full mt-4 p-4 bg-primary/10 rounded-lg">
+            <p className="text-gray-800 dark:text-gray-200 text-center text-sm font-normal leading-normal">
+              <span className="font-bold">{question.answer}: </span>
+              {question.description}
+            </p>
+          </div>
+        )}
       </main>
       <footer className="p-4 pt-0">
         <div className="flex flex-1 gap-3 w-full flex-col items-stretch pb-3">

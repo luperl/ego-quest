@@ -1,17 +1,39 @@
-import {
-  LevelGameCard,
-  LevelGameCardProps,
-} from "@/components/level-game-card";
-import { Button } from "@heroui/button";
+"use client";
+import { useContext, useState } from "react";
+import { LevelGameCardProps } from "@/components/level-game-card";
+import { useRouter } from "next/navigation";
+import { GameContext } from "@/contexts/game-context";
+import { SelectLevelStep } from "./_components/select-level-step";
+import { SelectQuantityQuestionsStep } from "./_components/select-quantity-questions-step";
 
 export default function NewGamePage() {
+  const router = useRouter();
+
+  const handleOnClickLevel = (level: LevelGameCardProps["level"]) => {
+    setSelectedLevel(level);
+    setStep(1);
+  };
+
+  const handleOnConfirm = () => {
+    if (selectedLevel) {
+      gameContext?.setLevel(selectedLevel);
+      gameContext?.setTotalQuestions(quantity);
+      gameContext?.loadQuestionCards(quantity);
+      router.push("/game/run");
+    }
+  };
+
+  const [selectedLevel, setSelectedLevel] = useState<
+    LevelGameCardProps["level"] | null
+  >(null);
+
   const levelButtons: Array<LevelGameCardProps> = [
     {
       icon: "circle",
       title: "Fácil",
       description:
         "Uma introdução aos conceitos, com mais dicas e menor complexidade.",
-      href: "/game/run",
+      onClick: handleOnClickLevel,
       buttonTitle: "Iniciar Jogo",
       level: "easy",
     },
@@ -20,7 +42,7 @@ export default function NewGamePage() {
       title: "Médio",
       description:
         "Um desafio balanceado, ideal para quem já conhece o básico.",
-      href: "/game/run",
+      onClick: handleOnClickLevel,
       buttonTitle: "Iniciar Jogo",
       level: "medium",
     },
@@ -29,28 +51,57 @@ export default function NewGamePage() {
       title: "Difícil",
       description:
         "Teste avançado de conhecimento, com menos auxílios e cenários complexos.",
-      href: "/game/run",
+      onClick: handleOnClickLevel,
       buttonTitle: "Iniciar Jogo",
       level: "hard",
     },
   ];
 
+  const gameContext = useContext(GameContext);
+
+  const [step, setStep] = useState(0);
+  const [quantity, setQuantity] = useState(10);
+
+  const handleSetQuantityQuestions = (quantity: number) => {
+    setQuantity(quantity);
+  };
+
+  const switchStep = (position: number) => {
+    const step = [
+      {
+        position: 0,
+        component: (
+          <SelectLevelStep
+            goBack={goHome}
+            levelButtons={levelButtons}
+          ></SelectLevelStep>
+        ),
+      },
+      {
+        position: 1,
+        component: (
+          <SelectQuantityQuestionsStep
+            goBack={goSelectLevel}
+            onSetQuantityQuestions={handleSetQuantityQuestions}
+            onConfirm={handleOnConfirm}
+          ></SelectQuantityQuestionsStep>
+        ),
+      },
+    ];
+    return step[position].component;
+  };
+
+  const goHome = () => {
+    router.push("/");
+  };
+
+  const goSelectLevel = () => {
+    setStep(0);
+  };
+
   return (
     <div className="relative flex h-auto min-h-screen mx-auto w-full max-w-md flex-col group/design-root  text-slate-800 dark:text-slate-200">
-      <div className="flex items-center p-4 pb-2 justify-between sticky top-0 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm z-10">
-        <Button className="flex size-12 shrink-0 items-center justify-center rounded-full text-slate-700 dark:text-slate-300">
-          <span className="material-symbols-outlined">arrow_back</span>
-        </Button>
-        <h1 className="text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">
-          Escolha o seu desafio
-        </h1>
-      </div>
-
-      <main className="flex flex-col gap-4 p-4 pt-6">
-        {levelButtons.map((level, index) => (
-          <LevelGameCard key={index} {...level} />
-        ))}
-      </main>
+      {switchStep(step)}
     </div>
   );
 }
