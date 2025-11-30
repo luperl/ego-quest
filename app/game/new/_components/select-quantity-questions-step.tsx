@@ -59,17 +59,10 @@ export const SelectQuantityQuestionsStep = ({
 
   return (
     <Container>
-      <Container.Header>
-        <Button
-          onPress={goBack}
-          className="flex size-12 shrink-0 items-center justify-center rounded-full text-slate-700 dark:text-slate-300"
-        >
-          <span className="material-symbols-outlined">arrow_back</span>
-        </Button>
-        <h1 className="text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">
-          Quantas perguntas?
-        </h1>
-      </Container.Header>
+      <Container.Header
+        onClickButton={goBack}
+        title="Quantas perguntas?"
+      ></Container.Header>
 
       <Container.Main>
         <div className="flex flex-col gap-8 flex-1">

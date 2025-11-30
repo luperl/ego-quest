@@ -27,6 +27,12 @@ export default function Home() {
                   <span className="truncate">Novo Jogo</span>
                 </Button>
               </Link>
+
+              <Link href="/about-mechanisms">
+                <Button className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 px-5 bg-transparent text-[#2D3748] dark:text-[#A0AEC0] text-base font-bold leading-normal tracking-[0.015em] w-full">
+                  <span className="truncate">Mecanismos de Defesa</span>
+                </Button>
+              </Link>
             </div>
           </div>
           <div className="relative w-full aspect-[4/3] -mb-1">

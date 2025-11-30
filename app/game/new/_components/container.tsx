@@ -1,3 +1,4 @@
+import { HeaderNavigation } from "@/components/header-navigation";
 import { Children } from "react";
 
 export const Container = ({ children }: { children: React.ReactNode }) => {
@@ -19,5 +20,15 @@ export const Container = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-Container.Header = ({ children }: { children: React.ReactNode }) => children;
+interface ContainerHeaderProps {
+  onClickButton: () => void;
+  title: string;
+  icon?: string;
+}
+
+Container.Header = ({ onClickButton, title, icon }: ContainerHeaderProps) => {
+  return (
+    <HeaderNavigation onClickButton={onClickButton} title={title} icon={icon} />
+  );
+};
 Container.Main = ({ children }: { children: React.ReactNode }) => children;
