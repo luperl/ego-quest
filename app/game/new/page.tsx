@@ -16,9 +16,7 @@ export default function NewGamePage() {
 
   const handleOnConfirm = () => {
     if (selectedLevel) {
-      gameContext?.setLevel(selectedLevel);
-      gameContext?.setTotalQuestions(quantity);
-      gameContext?.loadQuestionCards(quantity);
+      gameContext?.generateGame(selectedLevel, quantity);
       router.push("/game/run");
     }
   };

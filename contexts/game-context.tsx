@@ -1,9 +1,18 @@
 "use client";
-import { LevelType } from "@/components/level-game-card";
-import React, { createContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { listCards } from "@/data/indext";
 import { Difficulty } from "@/types/list-cards";
-import { shuffle } from "@/utils/shuffle";
+import { LevelType } from "@/components/level-game-card";
+
+/* ------------------------------------------------------
+   TYPES
+------------------------------------------------------ */
 
 export interface QuestionOption {
   title: string;
@@ -11,6 +20,7 @@ export interface QuestionOption {
   isCorret: boolean | null;
   isDisabled: boolean;
 }
+
 export interface QuestionCard {
   answer: string;
   level: Difficulty;
@@ -37,215 +47,238 @@ export interface ReviewAnswer {
 export interface IGameContext {
   reviewAnswers: ReviewAnswer[];
   goToNextQuestion: () => void;
+
   score: number;
-  updateScore: (points: number) => void;
   totalQuestions: number;
-  setTotalQuestions: (total: number) => void;
-  currentQuestionIndex: number;
   level: LevelType;
-  setLevel: (level: LevelType) => void;
-  questionCards: QuestionCard[];
-  setQuestionCards: (level?: LevelType, quantity?: number) => void;
-  loadQuestionCards: (quantity?: number) => void;
+  currentQuestionIndex: number;
+
+  generateGame: (level: LevelType, quantity: number) => void;
   updateCardsAnswer: (
     questionIndex: number,
     optionIndex: number,
     isCorrect: boolean
   ) => void;
+
+  questionCards: QuestionCard[];
 }
 
 export const GameContext = createContext<IGameContext | undefined>(undefined);
+
+/* ------------------------------------------------------
+   CACHE — PREPARED ONCE
+------------------------------------------------------ */
+
+type Candidate = {
+  name: string;
+  text: string;
+  level: Difficulty;
+  description: string;
+};
+
+const candidatesCache: Record<Difficulty, Candidate[]> = {
+  easy: [],
+  medium: [],
+  hard: [],
+};
+
+let cachePrepared = false;
+
+function prepareCandidates() {
+  if (cachePrepared) return;
+
+  for (const mechanism of listCards.defenseMechanisms) {
+    for (const [difficulty, cards] of Object.entries(mechanism.cards)) {
+      const level = difficulty as Difficulty;
+
+      for (const card of cards as any[]) {
+        candidatesCache[level].push({
+          name: mechanism.name,
+          text: card.text,
+          level: card.difficulty,
+          description: card.description || mechanism.description || "",
+        });
+      }
+    }
+  }
+
+  cachePrepared = true;
+}
+
+/* ------------------------------------------------------
+   UTILS
+------------------------------------------------------ */
+
+function pickRandomItems<T>(arr: T[], count: number): T[] {
+  if (count >= arr.length) return arr.slice();
+
+  const result: T[] = [];
+  const used = new Uint8Array(arr.length);
+
+  while (result.length < count) {
+    const idx = Math.floor(Math.random() * arr.length);
+    if (!used[idx]) {
+      used[idx] = 1;
+      result.push(arr[idx]);
+    }
+  }
+  return result;
+}
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildOptions(answer: string, pool: string[]): QuestionOption[] {
+  const options = new Set<string>();
+  options.add(answer);
+
+  while (options.size < 3) {
+    const r = pool[Math.floor(Math.random() * pool.length)];
+    if (r !== answer) options.add(r);
+  }
+
+  // embaralha posições (correta pode ser 0, 1 ou 2)
+  const shuffled = shuffleArray(Array.from(options));
+
+  return shuffled.map((opt) => ({
+    title: opt,
+    correctAnswer: opt === answer,
+    isCorret: null,
+    isDisabled: false,
+  }));
+}
+
+function buildQuestionCards(
+  level: LevelType,
+  quantity: number
+): QuestionCard[] {
+  const allowed: Difficulty[] =
+    level === "easy" ? ["easy"] : level === "medium" ? ["medium"] : ["hard"];
+
+  const pool = allowed.flatMap((l) => candidatesCache[l]);
+  if (!pool.length) return [];
+
+  const selected = pickRandomItems(pool, quantity);
+  const answerPool = pool.map((c) => c.name);
+
+  return selected.map((cand) => ({
+    question: cand.text,
+    level: cand.level,
+    description: cand.description,
+    score: QuestionScores[cand.level],
+    answer: cand.name,
+    options: buildOptions(cand.name, answerPool),
+  }));
+}
+
+/* ------------------------------------------------------
+   PROVIDER
+------------------------------------------------------ */
 
 export function GameContextProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  useEffect(() => prepareCandidates(), []);
+
   const [reviewAnswers, setReviewAnswers] = useState<ReviewAnswer[]>([]);
   const [score, setScore] = useState(0);
-  const [totalQuestions, setTotalQuestions] = useState(10);
+  const [totalQuestions, setTotalQuestions] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [level, setLevel] = useState<LevelType>("easy");
-  const [questionCards, setQuestionCardsState] = useState<QuestionCard[]>([]);
+  const [questionCards, setQuestionCards] = useState<QuestionCard[]>([]);
 
-  const updateScore = useCallback((points: number) => {
-    setScore((prev) => prev + points);
+  const generateGame = useCallback((level: LevelType, quantity: number) => {
+    const cards = buildQuestionCards(level, quantity);
+
+    setLevel(level);
+    setTotalQuestions(cards.length);
+    setCurrentQuestionIndex(0);
+    setQuestionCards(cards);
+    setScore(0);
+    setReviewAnswers([]);
   }, []);
 
-  function buildOptions(
-    correct: string,
-    allAnswers: string[]
-  ): QuestionOption[] {
-    const wrongs = shuffle(allAnswers.filter((a) => a !== correct));
-    const rawOptions = shuffle([correct, ...wrongs.slice(0, 2)]);
-    const uniqueOptions = Array.from(new Set(rawOptions));
-    return uniqueOptions.map((opt) => ({
-      title: opt,
-      correctAnswer: opt === correct,
-      isCorret: null,
-      isDisabled: false,
-    }));
-  }
-
-  function getAllowedDifficulties(level: LevelType): LevelType[] {
-    if (level === "easy") return ["easy"];
-    if (level === "medium") return ["medium"];
-    return ["hard"];
-  }
-
-  function getCandidates(
-    mechanisms: typeof listCards.defenseMechanisms,
-    allowedDifficulties: LevelType[]
-  ): Array<{
-    name: string;
-    text: string;
-    level: Difficulty;
-    description: string;
-  }> {
-    return mechanisms.flatMap((m) =>
-      Object.entries(m.cards).flatMap(([difficulty, cards]) =>
-        allowedDifficulties.includes(difficulty as LevelType)
-          ? (
-              cards as {
-                text: string;
-                difficulty: Difficulty;
-                description?: string;
-              }[]
-            ).map((card) => ({
-              name: m.name,
-              text: card.text,
-              level: card.difficulty,
-              description: card.description || m.description || "",
-            }))
-          : []
-      )
-    );
-  }
-
-  function buildQuestionCards(
-    candidates: Array<{
-      name: string;
-      text: string;
-      level: Difficulty;
-      description: string;
-    }>,
-    quantity: number
-  ): QuestionCard[] {
-    const usedQuestions = new Set<string>();
-    const allAnswers = candidates.map((c) => c.name);
-    const questionCards: QuestionCard[] = [];
-    for (const cand of shuffle(candidates).slice(0, quantity)) {
-      if (usedQuestions.has(cand.text)) continue;
-      usedQuestions.add(cand.text);
-      questionCards.push({
-        question: cand.text,
-        level: cand.level,
-        description: cand.description,
-        score: QuestionScores[cand.level],
-        answer: cand.name,
-        options: buildOptions(cand.name, allAnswers),
-      });
-    }
-    return questionCards;
-  }
-
-  const setQuestionCards = useCallback(
-    (levelParam?: LevelType, quantityParam?: number) => {
-      const useLevel: LevelType = levelParam || level;
-      const mechanisms = listCards.defenseMechanisms || [];
-      const allowedDifficulties = getAllowedDifficulties(useLevel);
-      const candidates = getCandidates(mechanisms, allowedDifficulties);
-      const questionCount = quantityParam ?? totalQuestions;
-      const questionCards = buildQuestionCards(candidates, questionCount);
-      setQuestionCardsState(questionCards);
-      setTotalQuestions(questionCards.length);
-      setCurrentQuestionIndex(0);
-    },
-    [level, totalQuestions]
-  );
-
-  const loadQuestionCards = useCallback(
-    (quantity?: number) => {
-      setQuestionCards(level, quantity);
-    },
-    [level, setQuestionCards]
-  );
-
   const updateCardsAnswer = useCallback(
-    (questionIndex: number, optionIndex: number, isCorrect: boolean) => {
-      setQuestionCardsState((prevCards) => {
-        const questionCard = prevCards[questionIndex];
-        if (!questionCard) return prevCards;
-        const updatedOptions = questionCard.options.map((opt, idx) => {
-          if (idx === optionIndex) {
-            return { ...opt, isCorret: isCorrect, isDisabled: true };
-          }
-          return { ...opt, isDisabled: true };
-        });
-        const updatedCards = [...prevCards];
-        updatedCards[questionIndex] = {
-          ...questionCard,
-          options: updatedOptions,
+    (qIndex: number, oIndex: number, isCorrect: boolean) => {
+      setQuestionCards((prev) => {
+        const cards = [...prev];
+        const q = cards[qIndex];
+        if (!q) return prev;
+
+        const updatedOptions = q.options.map((opt, i) => ({
+          ...opt,
+          isCorret: i === oIndex ? isCorrect : opt.isCorret,
+          isDisabled: true,
+        }));
+
+        cards[qIndex] = { ...q, options: updatedOptions };
+        return cards;
+      });
+
+      setReviewAnswers((prev) => {
+        const q = questionCards[qIndex];
+        if (!q) return prev;
+
+        const entry: ReviewAnswer = {
+          question: q.question,
+          userAnswer: q.options[oIndex].title,
+          description: q.description,
+          correctAnswer: q.answer,
+          isCorrect,
         };
-        return updatedCards;
+
+        const exists = prev.some((v) => v.question === q.question);
+        return exists
+          ? prev.map((v) => (v.question === q.question ? entry : v))
+          : [...prev, entry];
       });
-      setReviewAnswers((prev: ReviewAnswer[]) => {
-        const questionCard = questionCards[questionIndex];
-        if (!questionCard) return prev;
-        const userOption = questionCard.options[optionIndex];
-        const alreadyAnswered = prev.find(
-          (r: ReviewAnswer) => r.question === questionCard.question
-        );
-        if (alreadyAnswered) {
-          return prev.map((r: ReviewAnswer) =>
-            r.question === questionCard.question
-              ? {
-                  question: questionCard.question,
-                  userAnswer: userOption.title,
-                  description: questionCard.description,
-                  correctAnswer: questionCard.answer,
-                  isCorrect: isCorrect,
-                }
-              : r
-          );
-        }
-        return [
-          ...prev,
-          {
-            question: questionCard.question,
-            userAnswer: userOption.title,
-            description: questionCard.description,
-            correctAnswer: questionCard.answer,
-            isCorrect: isCorrect,
-          },
-        ];
-      });
+
       if (isCorrect) {
-        updateScore(questionCards[questionIndex]?.score || 0);
+        const pts = questionCards[qIndex]?.score ?? 0;
+        setScore((s) => s + pts);
       }
     },
-    [updateScore, questionCards]
+    [questionCards]
   );
 
-  const goToNextQuestion = () => {
-    setCurrentQuestionIndex((prev) => prev + 1);
-  };
+  const goToNextQuestion = useCallback(() => {
+    setCurrentQuestionIndex((i) => i + 1);
+  }, []);
 
-  const value: IGameContext = {
-    score,
-    updateScore,
-    totalQuestions,
-    setTotalQuestions,
-    currentQuestionIndex,
-    level,
-    setLevel,
-    questionCards,
-    setQuestionCards,
-    loadQuestionCards,
-    updateCardsAnswer,
-    reviewAnswers,
-    goToNextQuestion,
-  };
+  const value = useMemo<IGameContext>(
+    () => ({
+      reviewAnswers,
+      goToNextQuestion,
+
+      score,
+      totalQuestions,
+      level,
+      currentQuestionIndex,
+
+      questionCards,
+      generateGame,
+      updateCardsAnswer,
+    }),
+    [
+      reviewAnswers,
+      goToNextQuestion,
+      score,
+      totalQuestions,
+      level,
+      currentQuestionIndex,
+      questionCards,
+      generateGame,
+      updateCardsAnswer,
+    ]
+  );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

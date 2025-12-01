@@ -5,18 +5,12 @@ import { QuestionMechanismCard } from "@/components/question-mechanism-card";
 import { GameContext, QuestionCard } from "@/contexts/game-context";
 import { Button } from "@heroui/button";
 import { useRouter } from "next/navigation";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 
 export default function GamePage() {
   const router = useRouter();
   const context = useContext(GameContext);
   if (!context) return null;
-
-  useEffect(() => {
-    if (context.questionCards.length === 0) {
-      router.push("/game/new");
-    }
-  }, []);
 
   const {
     currentQuestionIndex,

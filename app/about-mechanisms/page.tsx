@@ -6,7 +6,7 @@ import { useState } from "react";
 const Card = ({ name, description }: { name: string; description: string }) => {
   return (
     <div className="space-y-4 mt-2">
-      <div className="bg-white dark:bg-slate-800/50 p-6 rounded-lg shadow-sm  h-[-webkit-fill-available]">
+      <div className="bg-white dark:bg-slate-800/50 dark:hover:bg-slate-900/50 transition  p-6 rounded-lg shadow-sm  h-[-webkit-fill-available]">
         <h2 className="text-xl font-bold font-serif-display text-primary mb-2">
           {name}
         </h2>

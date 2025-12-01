@@ -4,19 +4,13 @@ import { GameContext } from "@/contexts/game-context";
 import { Button } from "@heroui/button";
 import { Link } from "@heroui/link";
 import { useRouter } from "next/navigation";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 
 export default function ResumePage() {
   const context = useContext(GameContext);
   const router = useRouter();
 
   if (!context) return null;
-
-  useEffect(() => {
-    if (context.reviewAnswers.length === 0) {
-      router.push("/game/new");
-    }
-  }, []);
 
   const totalScore = context.questionCards.reduce(
     (acc, q) => acc + (q.score || 0),

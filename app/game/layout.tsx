@@ -1,9 +1,10 @@
-import { GamePageProviders } from "./providers";
+"use client";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <GamePageProviders>{children}</GamePageProviders>;
+import { withGameContextFilledGuard } from "@/guards/with-game-context-filled-guard";
+
+function GameLayout({ children }: { children: React.ReactNode }) {
+  const Guard = withGameContextFilledGuard(() => <>{children}</>);
+  return <Guard />;
 }
+
+export default GameLayout;

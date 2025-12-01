@@ -7,6 +7,9 @@ import { Providers } from "./providers";
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
 import { Navbar } from "@/components/navbar";
+import { Loading } from "./_components/loading";
+import { LoadingContextProvider } from "@/contexts/loading-context";
+import { GamePageProviders } from "./game/providers";
 
 export const metadata: Metadata = {
   title: {
@@ -49,14 +52,21 @@ export default function RootLayout({
           fontSans.variable
         )}
       >
-        <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <div className="relative flex flex-col h-screen">
-            <Navbar />
-            <main className="container mx-auto max-w-7xl  flex-grow">
-              {children}
-            </main>
-          </div>
-        </Providers>
+        <LoadingContextProvider>
+          <GamePageProviders>
+            <Providers
+              themeProps={{ attribute: "class", defaultTheme: "dark" }}
+            >
+              <Loading />
+              <div className="relative flex flex-col h-screen">
+                <Navbar />
+                <main className="container mx-auto max-w-7xl  flex-grow">
+                  {children}
+                </main>
+              </div>
+            </Providers>
+          </GamePageProviders>
+        </LoadingContextProvider>
       </body>
     </html>
   );
